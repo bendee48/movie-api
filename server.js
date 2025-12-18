@@ -5,13 +5,13 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import OpenAI from 'openai';
 
+// initiate express app
 const app = express();
-const client = new OpenAI(); // connect to openai sdk
 
 // Security Middleware courtesy of Helmet makes things bare secure
 app.use(helmet())
 
-// Set up what JS can request from other sites
+// Allow which sites can request from the API
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true
@@ -25,21 +25,35 @@ const limiter = rateLimit({
 })
 app.use(limiter)
 
-// Endpoints
+// Open AI SDK
+const client = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 
-// Default
+//* Endpoints *//
+
+// Root
 app.get("/", (req, res) => {
   res.send("API is running");
 });
 
-
-app.get("/api/suggest-film", async (req, res) => {
+// GET single film suggestion
+app.get("/api/film/lucky", async (req, res) => {
   try {
-    console.log('hello')
-    res.json({result: "hello"})
+    const response = await client.responses.create({
+      model: 'gpt-5-nano-2025-08-07',
+      instructions: 'Always return just a film name. Return a different film than one you\'ve returned before.',
+      input: 'Suggest a good film to watch.'
+    })
+    res.status(200).json({result: response.output_text});
   } catch(e) {
     console.log(e.message)
+    res.status(500).send(e.message)
   }
+})
+
+// GET return film from queries
+app.get("/api/film", async (req, res) => {
+  console.log(req.query)
+  res.status(200).json(req.query)
 })
 
 // Connect express app
