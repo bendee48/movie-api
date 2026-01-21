@@ -52,8 +52,23 @@ app.get("/api/film/lucky", async (req, res) => {
 
 // GET return film from queries
 app.get("/api/film", async (req, res) => {
-  console.log(req.query)
-  res.status(200).json(req.query)
+  const { genre, decade, runtime, rating } = req.query;
+  
+  try {
+    const response = await client.responses.create({
+      model: 'gpt-5-nano-2025-08-07',
+      instructions: 'Always return just a film name. Return a different film than one you\'ve returned before.',
+      input: 
+        `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
+         has a runtime of ${runtime} and has an imdb rating ${rating}.
+        `
+    })
+    res.status(200).json({result: response.output_text})
+  }
+  catch(e) {
+    console.log(e.message)
+    res.status(500).send(e.message)
+  } 
 })
 
 // Connect express app
