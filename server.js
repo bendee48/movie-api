@@ -52,15 +52,15 @@ app.get("/api/film/lucky", async (req, res) => {
 
 // GET return film from queries
 app.get("/api/film", async (req, res) => {
-  const { genre, decade, runtime, rating } = req.query;
+  const { genre, decade, runtime, rating, language } = req.query;
   
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
-      instructions: 'Always return just a film name. Return a different film than one you\'ve returned before.',
+      instructions: 'Return a film name, the director and a short summary of the film. Return a different film than one you\'ve returned before.',
       input: 
         `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
-         has a runtime of ${runtime} and has an imdb rating ${rating}.
+         has a runtime of ${runtime}, is in ${language} and has an imdb rating ${rating}.
         `
     })
     res.status(200).json({result: response.output_text})
