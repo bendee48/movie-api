@@ -11,6 +11,9 @@ const app = express();
 // Security Middleware courtesy of Helmet makes things bare secure
 app.use(helmet())
 
+// Allow json to be received to a POST endpoint
+app.use(express.json())
+
 // Allow which sites can request from the API
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -36,11 +39,23 @@ app.get("/", (req, res) => {
 });
 
 // GET single film suggestion
-app.get("/api/film/lucky", async (req, res) => {
+app.post("/api/film/lucky", async (req, res) => {
+  const { previousFilms = [] } = req.body;
+  
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
-      instructions: 'Always return just a film name. Return a different film than one you\'ve returned before.',
+      instructions: 
+        `Return a film name, the date of it\'s release, the director and a short summary of the film
+         with no spoilers.
+         Return JSON in this format:
+          {
+            "title": "",
+            "year": "",
+            "director": "",
+            "summary": ""
+          } 
+         Do not return any of these films ${previousFilms.join(', ')}.`,
       input: 'Suggest a good film to watch.'
     })
     res.status(200).json({result: response.output_text});
@@ -57,7 +72,9 @@ app.get("/api/film", async (req, res) => {
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
-      instructions: 'Return a film name, the director and a short summary of the film. Return a different film than one you\'ve returned before.',
+      instructions: 
+        `Return a film name, the director, release year and a short summary of the film. 
+         Return a different film than one you\'ve returned before.`,
       input: 
         `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
          has a runtime of ${runtime}, is in ${language} and has an imdb rating ${rating}.
