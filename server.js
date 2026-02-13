@@ -38,16 +38,16 @@ app.get("/", (req, res) => {
   res.send("API is running");
 });
 
-// GET single film suggestion
+// POST single random film suggestion
 app.post("/api/film/lucky", async (req, res) => {
   const { previousFilms = [] } = req.body;
-  
+
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `Return a film name, the date of it\'s release, the director and a short summary of the film
-         with no spoilers.
+        `Return a film name, the year of it\'s release, the director and a short summary of the film
+         with no spoilers. The film can be from any genre, year, country etc but generally regarded as being good.
          Return JSON in this format:
           {
             "title": "",
@@ -65,16 +65,25 @@ app.post("/api/film/lucky", async (req, res) => {
   }
 })
 
-// GET return film from queries
-app.get("/api/film", async (req, res) => {
+// POST return film from specified queries
+app.post("/api/film", async (req, res) => {
   const { genre, decade, runtime, rating, language } = req.query;
+  const { previousFilms = [] } = req.body;
   
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `Return a film name, the director, release year and a short summary of the film. 
-         Return a different film than one you\'ve returned before.`,
+        `Return a film name, the year of it\'s release, the director and a short summary of the film
+         with no spoilers. The film can be from any genre, year, country etc but generally regarded as being good.
+         Return JSON in this format:
+          {
+            "title": "",
+            "year": "",
+            "director": "",
+            "summary": ""
+          } 
+         Do not return any of these films ${previousFilms.join(', ')}.`,
       input: 
         `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
          has a runtime of ${runtime}, is in ${language} and has an imdb rating ${rating}.
