@@ -46,15 +46,17 @@ app.post("/api/film/lucky", async (req, res) => {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `Return a film name, the year of it\'s release, the director and a short summary of the film
-         with no spoilers. The film can be from any genre, year, country etc but generally regarded as being good.
+        `Return a film name, the year of it\'s release, the director, a few of the main actors involved,
+         and a short summary of the film with no spoilers. 
+         The film can be from any genre, year, country etc but generally regarded as being good.
          Return JSON in this format:
           {
             "title": "",
             "year": "",
             "director": "",
+            "stars": "",
             "summary": ""
-          } 
+          }
          Do not return any of these films ${previousFilms.join(', ')}.`,
       input: 'Suggest a good film to watch.'
     })
@@ -74,15 +76,21 @@ app.post("/api/film", async (req, res) => {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `Return a film name, the year of it\'s release, the director and a short summary of the film
-         with no spoilers. The film can be from any genre, year, country etc but generally regarded as being good.
+        `Return a film name, the year of it\'s release, the director, a couple of the main actors involved
+         and a short summary of the film with no spoilers. 
+         The film can be from any genre, year, country etc but generally regarded as being good.
          Return JSON in this format:
           {
             "title": "",
             "year": "",
             "director": "",
+            "stars": "",
             "summary": ""
-          } 
+          }
+         Or if you're unable to find a suitable film within those parameters return JSON in this format:
+          {
+            "notFound": "true"
+          }
          Do not return any of these films ${previousFilms.join(', ')}.`,
       input: 
         `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
