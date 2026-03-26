@@ -48,7 +48,8 @@ app.post("/api/film/lucky", async (req, res) => {
       instructions: 
         `Return a film name, the year of it\'s release, the director, a few of the main actors involved,
          and a short summary of the film with no spoilers. 
-         The film can be from any genre, year, country etc but generally regarded as being good.
+         The film can be from any genre, year, country etc but generally regarded as being good
+         by either critics or audiences.
          Return JSON in this format:
           {
             "title": "",
@@ -77,8 +78,7 @@ app.post("/api/film", async (req, res) => {
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
         `Return a film name, the year of it\'s release, the director, a couple of the main actors involved
-         and a short summary of the film with no spoilers. 
-         The film can be from any genre, year, country etc but generally regarded as being good.
+         and a short summary of the film with no spoilers.
          Return JSON in this format:
           {
             "title": "",
@@ -93,8 +93,8 @@ app.post("/api/film", async (req, res) => {
           }
          Do not return any of these films ${previousFilms.join(', ')}.`,
       input: 
-        `Suggest a film to watch that is of the genre ${genre}, was released in the ${decade},
-         has a runtime of ${runtime}, is in ${language} and has an imdb rating ${rating}.
+        `Suggest a film to watch that is of the genre '${genre},' was released in ${decade},
+         has a runtime of ${runtime}, is in ${language} and has an imdb rating of ${rating}.
         `
     })
     res.status(200).json({result: response.output_text})
