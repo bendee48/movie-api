@@ -33,6 +33,7 @@ const client = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 
 // Helper Functions
 
+// Returns the user's region
 function getCountry(req) {
   return (
     req.headers["cf-ipcountry"] ||
@@ -47,7 +48,7 @@ app.get("/", (req, res) => {
   res.send("API is running");
 });
 
-// POST single random film suggestion
+// POST Returns a single random film
 app.post("/api/film/lucky", async (req, res) => {
   const { previousFilms = [] } = req.body;
   const country = getCountry(req);
@@ -56,26 +57,27 @@ app.post("/api/film/lucky", async (req, res) => {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `You are an experienced film critic. Return a film name, the year of it\'s release, the director, a few of the main actors involved,
-         a short summary of the film (with no spoilers) and a list of streaming services that are currently showing said film. 
-         The film can be from any genre, year, country etc but ensure it is generally regarded as being "good", predominantly by
-         film critics, then secondly by audiences. As a film critic aim to reccomend something good that might be lesser seen
-         by audiences.
-         The streaming information will be for the region ${country}. Show what the service is and provide a link to the film.
-         Do not return any of these films ${previousFilms.join(', ')}.
-         Return JSON in this format:
-          {
-            "title": "",
-            "year": "",
-            "director": "",
-            "stars": "",
-            "summary": "",
-            "streaming": [
-              { "service": "", "url": "" }
-            ]
-          }
-        `,
-      input: 'Suggest a good film to watch.'
+        `You are an experienced film critic and MUST respond ONLY with valid JSON, nothing else.
+        Return a highly-regarded film that is lesser-known by general audiences. 
+        Include: title, year, director, main actors (comma-separated), spoiler-free summary, and current streaming availability for ${country}.
+
+        REQUIRED JSON FORMAT (no variations):
+        {
+          "title": "",
+          "year": "",
+          "director": "",
+          "actors": "",
+          "summary": "",
+          "streaming": [
+            { "service": "", "url": "" }
+          ]
+        }
+
+        RULES:
+        - Return ONLY the JSON object, no other text
+        - Do not suggest: ${previousFilms.join(', ') || 'none'}
+        - Prioritize critically-acclaimed films over mainstream choices`,
+      input: 'Suggest one good film for me to watch.'
     })
     res.status(200).json({result: response.output_text});
   } catch(e) {
@@ -90,34 +92,49 @@ app.post("/api/film", async (req, res) => {
   const { previousFilms = [] } = req.body;
   const country = getCountry(req);
   
+  const filters = {
+    genre: genre || 'any genre',
+    decade: decade || 'any decade',
+    runtime: runtime || 'any runtime',
+    rating: rating || 'any rating',
+    language: language || 'any language'
+  };
+  
   try {
     const response = await client.responses.create({
       model: 'gpt-5-nano-2025-08-07',
       instructions: 
-        `You are an experienced film critic. Return a film name, the year of it\'s release, the director, a few of the main actors involved,
-         a short summary of the film (with no spoilers) and a list of streaming services that are currently showing said film.
-         The streaming information will be for the region ${country}. Show what the service is and provide a link to the film.
-         Do not return any of these films ${previousFilms.join(', ')}.
-         Return JSON in this format:
-          {
-            "title": "",
-            "year": "",
-            "director": "",
-            "stars": "",
-            "summary": "",
-            "streaming": [
-              { "service": "", "url": "" }
-            ]
-          }
-         Or if you're unable to find a suitable film within those parameters return JSON in this format:
-          {
-            "notFound": "true"
-          }
-        `,
-      input: 
-        `Suggest a film to watch that is of the genre '${genre},' was released in ${decade},
-         has a runtime of ${runtime}, is in ${language} and has an imdb rating of ${rating}.
-        `
+        `You are an experienced film critic and MUST respond ONLY with valid JSON, nothing else.
+
+        REQUIRED JSON FORMAT:
+        If a film matches the criteria:
+        {
+          "title": "",
+          "year": "",
+          "director": "",
+          "actors": "",
+          "summary": "",
+          "streaming": [
+            { "service": "", "url": "" }
+          ]
+        }
+
+        If NO film matches the criteria:
+        {
+          "notFound": true,
+          "reason": "brief explanation"
+        }
+
+        RULES:
+        - Return ONLY valid JSON, no markdown, no extra text
+        - Do not suggest: ${previousFilms.join(', ') || 'none'}
+        - Streaming info is for ${country}`,
+      input: `Find a film matching these filters:
+        - Genre: ${filters.genre}
+        - Release decade: ${filters.decade}
+        - Runtime: ${filters.runtime}
+        - IMDb rating: ${filters.rating}
+        - Language: ${filters.language}`
     })
     res.status(200).json({result: response.output_text})
   }
