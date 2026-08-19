@@ -10,6 +10,8 @@ function createApp({ openaiClient } = {}) {
 
   app.use(helmet());
   app.use(express.json());
+  // greenlights which origins can request from the api, and allows cookies to be sent cross-origin
+  // the movie app sits on the FRONTEND_URL, so we need to allow that origin to make requests to the API
   app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
@@ -33,7 +35,10 @@ function createApp({ openaiClient } = {}) {
   });
 
   app.post('/api/film/lucky', async (req, res) => {
-    const { previousFilms = [] } = req.body;
+    const { previousFilms = [] } = req.body || {};
+    if (!Array.isArray(previousFilms)) {
+      return res.status(400).json({ error: 'previousFilms must be an array' });
+    }
     const country = getCountry(req);
 
     try {
@@ -71,7 +76,10 @@ function createApp({ openaiClient } = {}) {
 
   app.post('/api/film', async (req, res) => {
     const { genre, decade, runtime, rating, language } = req.query;
-    const { previousFilms = [] } = req.body;
+    const { previousFilms = [] } = req.body || {};
+    if (!Array.isArray(previousFilms)) {
+      return res.status(400).json({ error: 'previousFilms must be an array' });
+    }
     const country = getCountry(req);
 
     const filters = {

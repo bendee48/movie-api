@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node server.js",
     "watch": "node --watch server.js",
-    "test": "vitest run"
+    "tests": "vitest run"
   },
   "author": "",
   "license": "ISC",
