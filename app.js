@@ -5,7 +5,9 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import OpenAI from 'openai';
 
+
 function createApp({ openaiClient } = {}) {
+  console.log(process.env.NODE_ENV, 'quoi')
   const app = express();
 
   app.use(helmet());
