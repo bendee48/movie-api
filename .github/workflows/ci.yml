@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_URL: http://localhost:3000
 
     steps:
       - name: Check out repository
