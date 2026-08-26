@@ -22,7 +22,11 @@ function createApp({ openaiClient } = {}) {
     throw new Error('OPENAI_API_KEY is required in production');
   }
 
-  const client = openaiClient || new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = openaiClient || (
+    process.env.OPENAI_API_KEY
+      ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+      : null
+  );
 
   function getCountry(req) {
     const country = req.headers['cf-ipcountry'];
@@ -62,7 +66,7 @@ function createApp({ openaiClient } = {}) {
   app.post('/api/film/lucky', async (req, res) => {
     const { previousFilms = [] } = req.body || {};
     if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
-      return res.status(400).json({ error: 'previousFilms must be an array of up to 20 short strings' });
+      return res.status(400).json({ error: 'previousFilms must be an array of up to 200 short strings' });
     }
     const country = getCountry(req);
 
@@ -102,7 +106,7 @@ function createApp({ openaiClient } = {}) {
     const { genre, decade, runtime, rating, language } = req.query;
     const { previousFilms = [] } = req.body || {};
     if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
-      return res.status(400).json({ error: 'previousFilms must be an array of up to 20 short strings' });
+      return res.status(400).json({ error: 'previousFilms must be an array of up to 200 short strings' });
     }
     const country = getCountry(req);
 
