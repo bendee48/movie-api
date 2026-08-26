@@ -167,10 +167,10 @@ describe('movie API', () => {
     const app = createApp({ openaiClient: createFakeClient() });
 
     const responses = await Promise.all(
-      Array.from({ length: 51 }, () => request(app).get('/'))
+      Array.from({ length: 11 }, () => request(app).get('/'))
     );
 
     expect(responses.filter(({ status }) => status === 429)).toHaveLength(1);
-    expect(responses.at(-1).text).toBe('Request limit hit, I\'m not made of money, try again later.');
+    expect(responses.at(-1).text).toBe('Too many requests for now, please try again later.');
   });
 });

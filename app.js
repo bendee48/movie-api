@@ -50,8 +50,8 @@ function createApp({ openaiClient } = {}) {
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 50,
-    message: 'Request limit hit, I\'m not made of money, try again later.'
+    limit: 10,
+    message: 'Too many requests for now, please try again later.'
   });
   app.use(limiter);
 
