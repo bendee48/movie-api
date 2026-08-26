@@ -6,9 +6,13 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "node --watch server.js",
     "watch": "node --watch server.js",
-    "tests": "vitest run"
+    "test": "vitest run",
+    "tests": "npm test"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "author": "",
   "license": "ISC",

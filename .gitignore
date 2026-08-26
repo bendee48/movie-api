@@ -1,5 +1,10 @@
 # Environment variables
 .env
 
+# Dependencies and generated output
+node_modules/
+coverage/
+*.log
+
 # Miscellaneous
 todo.txt

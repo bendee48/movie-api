@@ -7,17 +7,46 @@ import OpenAI from 'openai';
 
 
 function createApp({ openaiClient } = {}) {
-  console.log(process.env.NODE_ENV, 'quoi')
   const app = express();
-
+  app.set('trust proxy', 1);
   app.use(helmet());
-  app.use(express.json());
+  app.use(express.json({ limit: '20kb' }));
   // greenlights which origins can request from the api, and allows cookies to be sent cross-origin
   // the movie app sits on the FRONTEND_URL, so we need to allow that origin to make requests to the API
   app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     credentials: true
   }));
+
+  if (!openaiClient && process.env.NODE_ENV === 'production' && !process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required in production');
+  }
+
+  const client = openaiClient || new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  function getCountry(req) {
+    const country = req.headers['cf-ipcountry'];
+    return typeof country === 'string' && /^[A-Z]{2}$/i.test(country)
+      ? country.toUpperCase()
+      : 'UK';
+  }
+
+  const MAX_PREVIOUS_FILMS = 200;
+  const MAX_FILM_TITLE_LENGTH = 200;
+
+  function validatePreviousFilms(previousFilms) {
+    return previousFilms.length <= MAX_PREVIOUS_FILMS
+      && previousFilms.every(
+        (film) =>
+          typeof film === 'string' &&
+          film.trim().length > 0 &&
+          film.length <= MAX_FILM_TITLE_LENGTH
+      );
+  }
+
+  function getFilter(value, fallback) {
+    return typeof value === 'string' && value.length <= 100 ? value : fallback;
+  }
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -26,20 +55,14 @@ function createApp({ openaiClient } = {}) {
   });
   app.use(limiter);
 
-  const client = openaiClient || new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  function getCountry(req) {
-    return req.headers['cf-ipcountry'] || 'UK';
-  }
-
   app.get('/', (req, res) => {
     res.send('API is running');
   });
 
   app.post('/api/film/lucky', async (req, res) => {
     const { previousFilms = [] } = req.body || {};
-    if (!Array.isArray(previousFilms)) {
-      return res.status(400).json({ error: 'previousFilms must be an array' });
+    if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
+      return res.status(400).json({ error: 'previousFilms must be an array of up to 20 short strings' });
     }
     const country = getCountry(req);
 
@@ -68,7 +91,6 @@ function createApp({ openaiClient } = {}) {
           - Prioritize critically-acclaimed films over mainstream choices`,
         input: 'Suggest one good film for me to watch.'
       });
-
       res.status(200).json({ result: response.output_text });
     } catch (e) {
       console.log(e.message);
@@ -79,17 +101,17 @@ function createApp({ openaiClient } = {}) {
   app.post('/api/film', async (req, res) => {
     const { genre, decade, runtime, rating, language } = req.query;
     const { previousFilms = [] } = req.body || {};
-    if (!Array.isArray(previousFilms)) {
-      return res.status(400).json({ error: 'previousFilms must be an array' });
+    if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
+      return res.status(400).json({ error: 'previousFilms must be an array of up to 20 short strings' });
     }
     const country = getCountry(req);
 
     const filters = {
-      genre: genre || 'any genre',
-      decade: decade || 'any decade',
-      runtime: runtime || 'any runtime',
-      rating: rating || 'any rating',
-      language: language || 'any language'
+      genre: getFilter(genre, 'any genre'),
+      decade: getFilter(decade, 'any decade'),
+      runtime: getFilter(runtime, 'any runtime'),
+      rating: getFilter(rating, 'any rating'),
+      language: getFilter(language, 'any language')
     };
 
     try {
