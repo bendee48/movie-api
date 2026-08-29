@@ -38,20 +38,18 @@ describe('movie API', () => {
     expect(response.body.result).toBe(result);
   });
 
-  it('POST /api/film/lucky includes previous films and country in the request', async () => {
+  it('POST /api/film/lucky includes previous films in the request', async () => {
     const fakeClient = createFakeClient();
     const app = createApp({ openaiClient: fakeClient });
 
     await request(app)
       .post('/api/film/lucky')
-      .set('cf-ipcountry', 'US')
       .send({ previousFilms: ['The Lives of Others'] });
 
     const requestOptions = fakeClient.responses.create.mock.calls[0][0];
     expect(requestOptions.model).toBe('gpt-5-nano-2025-08-07');
     expect(requestOptions.input).toBe('Suggest one good film for me to watch.');
     expect(requestOptions.instructions).toContain('Do not suggest: The Lives of Others');
-    expect(requestOptions.instructions).toContain('availability for US');
   });
 
   it('POST /api/film applies default filters', async () => {
@@ -69,17 +67,15 @@ describe('movie API', () => {
           - Runtime: any runtime
           - IMDb rating: any rating
           - Language: any language`);
-    expect(fakeClient.responses.create.mock.calls[0][0].instructions).toContain('Streaming info is for UK');
     expect(fakeClient.responses.create).toHaveBeenCalledTimes(1);
   });
 
-  it('POST /api/film forwards filters, previous films, and country', async () => {
+  it('POST /api/film forwards filters and previous films', async () => {
     const fakeClient = createFakeClient();
     const app = createApp({ openaiClient: fakeClient });
 
     const response = await request(app)
       .post('/api/film?genre=Drama&decade=1990s&runtime=120&rating=8&language=French')
-      .set('cf-ipcountry', 'FR')
       .send({ previousFilms: ['The Lives of Others'] });
 
     expect(response.status).toBe(200);
@@ -90,7 +86,6 @@ describe('movie API', () => {
     expect(requestOptions.input).toContain('- IMDb rating: 8');
     expect(requestOptions.input).toContain('- Language: French');
     expect(requestOptions.instructions).toContain('Do not suggest: The Lives of Others');
-    expect(requestOptions.instructions).toContain('Streaming info is for FR');
     expect(fakeClient.responses.create).toHaveBeenCalledTimes(1);
   });
 

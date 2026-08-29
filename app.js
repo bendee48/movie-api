@@ -28,13 +28,6 @@ function createApp({ openaiClient } = {}) {
       : null
   );
 
-  function getCountry(req) {
-    const country = req.headers['cf-ipcountry'];
-    return typeof country === 'string' && /^[A-Z]{2}$/i.test(country)
-      ? country.toUpperCase()
-      : 'UK';
-  }
-
   const MAX_PREVIOUS_FILMS = 200;
   const MAX_FILM_TITLE_LENGTH = 200;
 
@@ -70,14 +63,13 @@ function createApp({ openaiClient } = {}) {
     if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
       return res.status(400).json({ error: 'previousFilms must be an array of up to 200 short strings' });
     }
-    const country = getCountry(req);
 
     try {
       const response = await client.responses.create({
         model: 'gpt-5-nano-2025-08-07',
         instructions: `You are an experienced film critic and MUST respond ONLY with valid JSON, nothing else.
           Return a highly-regarded film that is lesser-known by general audiences.
-          Include: title, year, director, main actors (comma-separated), spoiler-free summary, and current streaming availability for ${country}.
+          Include: title, year, director, main actors (comma-separated) and a spoiler-free summary.
 
           REQUIRED JSON FORMAT (no variations):
           {
@@ -86,9 +78,6 @@ function createApp({ openaiClient } = {}) {
             "director": "",
             "actors": "",
             "summary": "",
-            "streaming": [
-              { "service": "", "url": "" }
-            ]
           }
 
           RULES:
@@ -110,7 +99,6 @@ function createApp({ openaiClient } = {}) {
     if (!Array.isArray(previousFilms) || !validatePreviousFilms(previousFilms)) {
       return res.status(400).json({ error: 'previousFilms must be an array of up to 200 short strings' });
     }
-    const country = getCountry(req);
 
     const filters = {
       genre: getFilter(genre, 'any genre'),
@@ -124,7 +112,8 @@ function createApp({ openaiClient } = {}) {
       const response = await client.responses.create({
         model: 'gpt-5-nano-2025-08-07',
         instructions: `You are an experienced film critic and MUST respond ONLY with valid JSON, nothing else.
-
+          Include: title, year, director, main actors (comma-separated) and a spoiler-free summary.
+          
           REQUIRED JSON FORMAT:
           If a film matches the criteria:
           {
@@ -133,9 +122,6 @@ function createApp({ openaiClient } = {}) {
             "director": "",
             "actors": "",
             "summary": "",
-            "streaming": [
-              { "service": "", "url": "" }
-            ]
           }
 
           If NO film matches the criteria:
@@ -146,8 +132,7 @@ function createApp({ openaiClient } = {}) {
 
           RULES:
           - Return ONLY valid JSON, no markdown, no extra text
-          - Do not suggest: ${previousFilms.join(', ') || 'none'}
-          - Streaming info is for ${country}`,
+          - Do not suggest: ${previousFilms.join(', ') || 'none'}`,
         input: `Find a film matching these filters:
           - Genre: ${filters.genre}
           - Release decade: ${filters.decade}
