@@ -1,6 +1,6 @@
 # Movie Match API
 
-An Express API for discovering films based on mood, filters, and a bit of AI-assisted recommendation. Built to explore API design, OpenAI integration, and lightweight server-side validation.
+An Express API for discovering films based on mood and filters, with a lil bit of AI-assistance. Built to explore API design, OpenAI integration, and lightweight server-side validation.
 
 ## Overview
 
