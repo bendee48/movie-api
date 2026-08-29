@@ -1,68 +1,100 @@
-# Movie API
+# Movie Match API
 
-A small Express API for film recommendations using the OpenAI API. It was built as the backend for a film discovery app.
+An Express API for discovering films based on mood, filters, and a bit of AI-assisted recommendation. Built to explore API design, OpenAI integration, and lightweight server-side validation.
 
-## Features
+## Overview
 
-- Lucky (random) film recommendations
-- Filtering by genre, release decade, runtime, IMDb rating, and language
-- Streaming availability by country
-- Excluding films that have already been suggested
-- Basic security middleware, CORS, request validation, and rate limiting
+The API supports:
 
-## Running Locally
+- random film recommendations
+- filtered film searches by genre, decade, runtime, rating, and language
+- avoiding titles the user has already been reccomended
+- basic API security and rate limiting
 
-Install the dependencies:
+## Tech stack
+
+- Node.js
+- Express
+- OpenAI API
+- CORS
+- Helmet
+- Express Rate Limit
+- Vitest
+- Supertest
+
+## Project goals
+
+- building a REST API with Express
+- working with environment variables and secure configuration
+- integrating an external AI service
+- validating request payloads and query parameters
+- writing backend tests
+
+## Getting started
+
+### 1. Install dependencies
 
 ```bash
-npm ci
+npm install
 ```
 
-Create a `.env` file using `.env.example` as a guide, then add your OpenAI API key:
+### 2. Add environment variables
+
+Create a `.env` file in the project root:
 
 ```env
-OPENAI_API_KEY=your-openai-api-key
+OPENAI_API_KEY=your_openai_api_key
 FRONTEND_URL=http://localhost:3000
 PORT=3002
 ```
 
-Start the development server:
+### 3. Start the server
 
 ```bash
 npm run dev
 ```
 
-The API runs at `http://localhost:3002` by default. Run the test suite with:
+The API runs on:
+
+```text
+http://localhost:3002
+```
+
+### 4. Run tests
 
 ```bash
 npm test
 ```
 
-## Endpoints
+## API endpoints
 
-### `GET /`
+### Health check
 
-Returns the API health message.
+```http
+GET /
+```
 
-### `POST /api/film/lucky`
+Returns a simple confirmation that the API is running.
 
-Returns a random film recommendation.
+### Random film recommendation
+
+```http
+POST /api/film/lucky
+```
 
 Example request body:
 
 ```json
 {
-	"previousFilms": ["The Lives of Others"]
+  "previousFilms": ["The Lives of Others"]
 }
 ```
 
-### `POST /api/film`
+Returns a single recommendation that avoids films already suggested.
 
-Returns a film matching the supplied filters.
+### Filtered film search
 
-Example request:
-
-```text
+```http
 POST /api/film?genre=Drama&decade=1990s&runtime=120&rating=8&language=French
 ```
 
@@ -70,20 +102,23 @@ Example request body:
 
 ```json
 {
-	"previousFilms": []
+  "previousFilms": ["Josie and The Pussycats"]
 }
 ```
 
-## Environment Variables
+Returns a film matching the supplied criteria, if one is available.
 
-- `OPENAI_API_KEY` - OpenAI API key used by the server
-- `FRONTEND_URL` - Frontend origin allowed to access the API
-- `PORT` - Port used by the server; defaults to `3002`
+## Example response
 
-## Tech Stack
+```json
+{
+  "result": {
+    "title": "A Separation",
+    "year": 2011,
+    "director": "Asghar Farhadi",
+    "actors": "Payman Maadi, Leila Hatami, Sareh Bayat",
+    "summary": "A married couple faces a tense legal and emotional crisis during a difficult family situation.",
+  }
+}
+```
 
-- Node.js
-- Express
-- OpenAI API
-- Vitest
-- Supertest

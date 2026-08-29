@@ -59,6 +59,8 @@ function createApp({ openaiClient } = {}) {
   });
   app.use(limiter);
 
+  // Endpoints //
+
   app.get('/', (req, res) => {
     res.send('API is running');
   });
